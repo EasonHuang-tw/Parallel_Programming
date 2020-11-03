@@ -111,8 +111,7 @@ int main(int argc ,char **argv){
 		pthread_join(thread[i],NULL);
 	}
 	pthread_mutex_destroy(&pi_mutex);
-	printf("total_sum:%lld\n",total_sum);
-	printf("%0.8f",4.0f*(double)total_sum/(double)toss);
+	printf("%0.8f\n",4.0f*(double)total_sum/(double)toss);
 	//printf ("wall clock time = %0.8f\n", (double)period/CLOCKS_PER_SEC);
 	return 0;
 }
