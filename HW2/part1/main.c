@@ -4,6 +4,8 @@
 #include <time.h>
 #include <string.h>
 #include <immintrin.h>
+#include "simdxorshift128plus.h"
+
 
 pthread_t thread[1024];
 pthread_mutex_t pi_mutex;
@@ -32,29 +34,31 @@ float sum8(__m256 x) {
 }
 
 void *threadFunc(void *arg){
-	unsigned int seed = 1;
+//	unsigned int seed = 1;
 	long long toss = *(long long *)arg;
 	long long sum = 0;
-	avx_xorshift128plus_key_t mykey;	
+
+	avx_xorshift128plus_key_t mykey;
 	avx_xorshift128plus_init(324,4444,&mykey);
 	__m256 one = _mm256_set1_ps(1.0f);
-	__m256 zero = _mm256_setzero_ps();
+//	__m256 zero = _mm256_setzero_ps();
 	__m256 v_INT32_MAX = _mm256_set1_ps(INT32_MAX);
 	__m256 v_x , v_y , v_x2_y2_plus , mask ,v_result;
 	
 	for(int i = 0;i<toss;i+=8){
 		__m256i rand_i = avx_xorshift128plus(&mykey);
 		v_x = _mm256_cvtepi32_ps(rand_i);
-		v_x = _mm256_div_ps(v_x,v_INT32_MAX)
-		
-		__m256i rand_i = avx_xorshift128plus(&mykey);
-		v_x = _mm256_cvtepi32_ps(rand_i);
 		v_x = _mm256_div_ps(v_x,v_INT32_MAX);
+		
+		rand_i = avx_xorshift128plus(&mykey);
+		v_y = _mm256_cvtepi32_ps(rand_i);
+		v_y = _mm256_div_ps(v_y,v_INT32_MAX);
 
 		v_x2_y2_plus = _mm256_add_ps(_mm256_mul_ps(v_x,v_x),_mm256_mul_ps(v_y,v_y));
 		mask = _mm256_cmp_ps(one,v_x2_y2_plus,13);
 		v_result = _mm256_and_ps(mask,one);
-		sum += (long long)sum8(v_result); 
+		sum += (long long)sum8(v_result);
+		printf("%lld\n",sum); 
 	}
 	
 	
@@ -87,7 +91,7 @@ int main(int argc ,char **argv){
 		pthread_join(thread[i],NULL);
 	}
 	pthread_mutex_destroy(&pi_mutex);
-	//printf("total_sum:%lld\n",total_sum);
+	printf("total_sum:%lld\n",total_sum);
 	printf("%0.8f",4.0f*(double)total_sum/(double)toss);
 	//printf ("wall clock time = %0.8f\n", (double)period/CLOCKS_PER_SEC);
 	return 0;
