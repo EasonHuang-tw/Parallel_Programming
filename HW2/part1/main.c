@@ -56,7 +56,10 @@ void *threadFunc(void *arg){
 		v_y = _mm256_cvtepi32_ps(rand_i);
 		v_y = _mm256_div_ps(v_y,v_INT32_MAX);
 
-		v_x2_y2_plus = _mm256_add_ps(_mm256_mul_ps(v_x,v_x),_mm256_mul_ps(v_y,v_y));
+		v_y = _mm256_mul_ps(v_y,v_y);	
+		v_x2_y2_plus = _mm256_fmadd_ps(v_x, v_x, v_y);
+	
+		//v_x2_y2_plus = _mm256_add_ps(_mm256_mul_ps(v_x,v_x),_mm256_mul_ps(v_y,v_y));
 
 		mask = _mm256_cmp_ps(one,v_x2_y2_plus,13);
 		v_result = _mm256_and_ps(mask,one);
@@ -67,6 +70,7 @@ void *threadFunc(void *arg){
 			_mm256_store_ps(x,counter);
 			for(int j=0;j<8;j++){
 				sum += (long long)x[j];	
+		//	printf("%d\n",sum);
 			}
 
 			counter = zero;

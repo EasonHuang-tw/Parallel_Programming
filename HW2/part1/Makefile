@@ -1,5 +1,5 @@
 CXX := gcc
-CXXFLAGS := -I./common -O3 -mavx2 -std=gnu99 -Wall 
+CXXFLAGS := -I./common -g -O3 -mfma -mavx2 -std=gnu99 -Wall 
 HEADERS=include/simdxorshift128plus.h  include/xorshift128plus.h  
 
 OBJECTS= simdxorshift128plus.o xorshift128plus.o    
