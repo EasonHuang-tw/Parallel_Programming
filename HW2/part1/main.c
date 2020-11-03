@@ -38,15 +38,15 @@ void *threadFunc(void *arg){
 	long long toss = *(long long *)arg;
 	long long sum = 0;
 	const int sz = 9; 
-    	float *x = (float *)_mm_malloc(sz*sizeof(float), 32); 
+    	int *x = (int *)_mm_malloc(sz*sizeof(int), 32); 
 	avx_xorshift128plus_key_t mykey;
 	avx_xorshift128plus_init(324,4444,&mykey);
 	__m256 one = _mm256_set1_ps(1.0f);
-	__m256i one_i = _mm256_set1_epi32(1);
+	__m256i onei = _mm256_set1_epi32(1);
 	const __m256 zero = _mm256_setzero_ps();
 	__m256 v_INT32_MAX = _mm256_set1_ps(INT32_MAX);
 	__m256 v_x , v_y , v_x2_y2_plus , mask ,counter;
-	__m256 v_result;
+	__m256i v_result,counteri,maski;
 	for(int i = 0;i<toss;i+=8){
 		__m256i rand_i = avx_xorshift128plus(&mykey);
 		v_x = _mm256_cvtepi32_ps(rand_i);
@@ -62,12 +62,13 @@ void *threadFunc(void *arg){
 		//v_x2_y2_plus = _mm256_add_ps(_mm256_mul_ps(v_x,v_x),_mm256_mul_ps(v_y,v_y));
 
 		mask = _mm256_cmp_ps(one,v_x2_y2_plus,13);
-		v_result = _mm256_and_ps(mask,one);
-		counter = _mm256_add_ps(counter,v_result);
+		maski = _mm256_castps_si256(mask);
+		v_result = _mm256_and_si256(maski,onei);
+		counteri = _mm256_add_epi32(counteri,v_result);
 
-		if( i%170000000 == 0 ){
+		if( i%5000000000 == 0 ){
 //			sum = sum8(counter);			
-			_mm256_store_ps(x,counter);
+			_mm256_maskstore_epi32(x,_mm256_set1_epi64x(-1),counteri);
 			for(int j=0;j<8;j++){
 				sum += (long long)x[j];	
 		//	printf("%d\n",sum);
@@ -80,10 +81,12 @@ void *threadFunc(void *arg){
 		//printf("%lld\n",sum); 
 
 	}
-	_mm256_store_ps(x,counter);
-	for(int j=0;j<8;j++){
-		sum += (long long)x[j];	
-	}
+		//sum = sum8(counter);			
+		_mm256_maskstore_epi32(x,_mm256_set1_epi64x(-1),counteri);
+		for(int j=0;j<8;j++){
+			sum += (long long)x[j];	
+		//	printf("%d\n",sum);
+		}
 	
 	
 	pthread_mutex_lock(&pi_mutex);
