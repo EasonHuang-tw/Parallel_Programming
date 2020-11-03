@@ -58,7 +58,6 @@ void *threadFunc(void *arg){
 		mask = _mm256_cmp_ps(one,v_x2_y2_plus,13);
 		v_result = _mm256_and_ps(mask,one);
 		sum += (long long)sum8(v_result);
-		printf("%lld\n",sum); 
 	}
 	
 	
@@ -91,8 +90,7 @@ int main(int argc ,char **argv){
 		pthread_join(thread[i],NULL);
 	}
 	pthread_mutex_destroy(&pi_mutex);
-	printf("total_sum:%lld\n",total_sum);
-	printf("%0.8f",4.0f*(double)total_sum/(double)toss);
+	printf("%0.8f\n",4.0f*(double)total_sum/(double)toss);
 	//printf ("wall clock time = %0.8f\n", (double)period/CLOCKS_PER_SEC);
 	return 0;
 }
