@@ -3,4 +3,6 @@
 *.o
 *.out
 *.ppm
+*.ppm
+*.out
 *submit*
