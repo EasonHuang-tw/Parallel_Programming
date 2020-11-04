@@ -43,7 +43,7 @@ void workerThreadStart(WorkerArgs *const args)
 		i, 1,
 		args->maxIterations,
 		args->output);
-    }
+	}
   /*
     if(args->threadId != args->numThreads-1){
     	numRows =  (args->height-MOD)/args->numThreads;
