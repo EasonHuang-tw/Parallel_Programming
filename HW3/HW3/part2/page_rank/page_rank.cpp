@@ -20,14 +20,63 @@ void pageRank(Graph g, double *solution, double damping, double convergence)
 
   // initialize vertex weights to uniform probability. Double
   // precision scores are used to avoid underflow for large graphs
-
+	
   int numNodes = num_nodes(g);
-  double equal_prob = 1.0 / numNodes;
-  for (int i = 0; i < numNodes; ++i)
+	double *solution_old = (double*)malloc(sizeof(double) * g->num_nodes);;
+	int *no_outgoing_list = (int*)malloc(sizeof(int) * g->num_nodes);;
+	double converged_num = 1000;
+
+	double equal_prob = 1.0 / numNodes;
+  
+	for (int i = 0; i < numNodes; ++i)
   {
     solution[i] = equal_prob;
   }
 
+	int counter=0;
+	for (int i = 0; i<numNodes; ++i)
+	{
+			if(outgoing_size(g,i) == 0){
+				no_outgoing_list[counter] = i;
+				counter ++;
+			}
+
+	}
+
+	
+	while(converged_num > convergence){
+					converged_num = 0;
+					for (int i=0; i<numNodes; i++){
+						solution_old[i] = solution[i]; 
+						solution[i] = 0;	
+					}
+
+					for (int i=0; i<num_nodes(g); i++) {
+
+						// Vertex is typedef'ed to an int. Vertex* points into g.outgoing_edges[]
+						const Vertex* start = incoming_begin(g, i);
+						const Vertex* end = incoming_end(g, i);
+						//printf("Edge %u size %u\n",i,incoming_size(g,i));
+						for (const Vertex* v=start; v!=end; v++){
+							//printf("Edge %u %u\n", i,*v);
+							//printf("Edge %u outgoing %u\n", i, outgoing_size(g,*v)); 
+							solution[i] += solution_old[*v] / outgoing_size(g,*v);
+						}
+						solution[i]	= damping * solution[i] + (1.0-damping) / (double)numNodes;
+					 
+						for (int j = 0; j<counter; j++){
+								solution[i] += solution_old[no_outgoing_list[j]] / numNodes* damping;
+								//printf("im here");
+							
+							
+						}
+					
+						converged_num += abs(solution_old[i]-solution[i]);
+					}
+					
+			printf("converged num: %f\n", converged_num);
+	}
+	
   /*
      For PP students: Implement the page rank algorithm here.  You
      are expected to parallelize the algorithm using openMP.  Your

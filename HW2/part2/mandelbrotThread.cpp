@@ -29,22 +29,26 @@ extern void mandelbrotSerial(
 void workerThreadStart(WorkerArgs *const args)
 {
 
+
+    double start = CycleTimer::currentSeconds();
+    double end;
     // TODO FOR PP STUDENTS: Implement the body of the worker
     // thread here. Each thread should make a call to mandelbrotSerial()
     // to compute a part of the output image.  For example, in a
     // program that uses two threads, thread 0 could compute the top
     // half of the image and thread 1 could compute the bottom half.
-    //int numRows = 0;
-    //int startRows = 0;
-    //int MOD = args->height%args->numThreads;
- 	for (	int i = args->threadId; i<(args->height); i += args->numThreads) {
+    int numRows = 0;
+    int startRows = 0;
+    int MOD = args->height%args->numThreads;
+/* 	for (	int i = args->threadId; i<(args->height); i += args->numThreads) {
     		mandelbrotSerial(args->x0, args->y0, args->x1, args->y1,
 		args->width, args->height,
 		i, 1,
 		args->maxIterations,
 		args->output);
 	}
-  /*
+  /
+*/
     if(args->threadId != args->numThreads-1){
     	numRows =  (args->height-MOD)/args->numThreads;
 	startRows = numRows*args->threadId;
@@ -56,8 +60,12 @@ void workerThreadStart(WorkerArgs *const args)
     }
 	
     mandelbrotSerial(args->x0,args->y0,args->x1,args->y1,args->width,args->height, startRows ,numRows,args->maxIterations ,args->output);
-    */
-    printf("Hello world from thread %d\n", args->threadId);
+    
+ //   printf("Hello world from thread %d\n", args->threadId);
+end = CycleTimer::currentSeconds();
+
+    printf("Thread %d Time: %f\n", args->threadId, end - start);
+
 }
 
 //
