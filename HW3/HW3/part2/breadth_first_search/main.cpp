@@ -150,6 +150,8 @@ int main(int argc, char** argv) {
             for (int j=0; j<g->num_nodes; j++) {
                 if (sol2.distances[j] != sol4.distances[j]) {
                     fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol2.distances[j], sol4.distances[j]);
+										hs_check = false;
+										break;
                 }
             }
 
