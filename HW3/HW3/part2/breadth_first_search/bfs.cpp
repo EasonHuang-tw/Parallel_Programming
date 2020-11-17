@@ -11,6 +11,8 @@
 
 #define ROOT_NODE_ID 0
 #define NOT_VISITED_MARKER -1
+#define BOTTOMUP_NOT_VISITED_MARKER 0
+#define THRESHOLD 10000000
 
 void vertex_set_clear(vertex_set *list)
 {
@@ -33,6 +35,12 @@ void top_down_step(
     vertex_set *new_frontier,
     int *distances)
 {
+	int local_count;
+#pragma omp parallel private(local_count)
+{
+		local_count = 0;
+		int *local_frontier = (int*)malloc(sizeof(int)*g->num_nodes);
+		#pragma omp for schedule(guided)
     for (int i = 0; i < frontier->count; i++)
     {
 
@@ -47,15 +55,26 @@ void top_down_step(
         for (int neighbor = start_edge; neighbor < end_edge; neighbor++)
         {
             int outgoing = g->outgoing_edges[neighbor];
-
+						/*
             if (distances[outgoing] == NOT_VISITED_MARKER)
             {
                 distances[outgoing] = distances[node] + 1;
                 int index = new_frontier->count++;
                 new_frontier->vertices[index] = outgoing;
             }
+						*/
+						if(__sync_bool_compare_and_swap(&distances[outgoing],NOT_VISITED_MARKER,distances[node]+1)){
+							local_frontier[local_count] = outgoing;
+							local_count ++;
+						}
         }
-    }
+			}
+		#pragma omp critical
+		{
+			memcpy(new_frontier->vertices+new_frontier->count,local_frontier,local_count*sizeof(int));
+			new_frontier->count+=local_count;
+		}
+}
 }
 
 // Implements top-down BFS.
@@ -103,9 +122,69 @@ void bfs_top_down(Graph graph, solution *sol)
         new_frontier = tmp;
     }
 }
+void bottom_up_step(
+    Graph g,
+    vertex_set* frontier,    
+    int* distances,
+    int iteration) {
 
+    int local_count = 0;
+    // #pragma omp parallel num_threads(NUM_THREADS) private(local_count) 
+    // #pragma omp parallel private(local_count)
+    #pragma omp parallel 
+    {
+        // local_count = 0;
+        #pragma omp for reduction(+: local_count)
+        for (int i = 0; i < g->num_nodes; i++) {
+            if (frontier->vertices[i] == BOTTOMUP_NOT_VISITED_MARKER) {
+                int start_edge = g->incoming_starts[i];
+                int end_edge = (i == g->num_nodes-1)? g->num_edges : g->incoming_starts[i + 1];
+                for(int neighbor = start_edge; neighbor < end_edge; neighbor++) {
+                    int incoming = g->incoming_edges[neighbor];
+                    // if(__sync_bool_compare_and_swap(&frontier->present[incoming], iteration, distances[node] + 1))
+                    if(frontier->vertices[incoming] == iteration) {
+                        distances[i] = distances[incoming] + 1;
+                        // frontier->count++;
+                        local_count++;
+                        frontier->vertices[i] = iteration + 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+    }
+    frontier->count = local_count;
+
+}
 void bfs_bottom_up(Graph graph, solution *sol)
 {
+		vertex_set list1;
+    vertex_set_init(&list1, graph->num_nodes);
+    int iteration = 1;
+
+    vertex_set* frontier = &list1;    
+        
+    // setup frontier with the root node    
+    // just like put the root into queue
+    frontier->vertices[frontier->count++] = 1;
+
+    // set the root distance with 0
+    sol->distances[ROOT_NODE_ID] = 0;
+    
+    // just like pop the queue
+    while (frontier->count != 0) {
+        
+        frontier->count = 0;
+        //double start_time = CycleTimer::currentSeconds();
+        
+
+        bottom_up_step(graph, frontier, sol->distances, iteration);
+
+        //double end_time = CycleTimer::currentSeconds();
+        //`:Wprintf("frontier=%-10d %.4f sec\n", frontier->count, end_time - start_time);
+
+        iteration++;
     // For PP students:
     //
     // You will need to implement the "bottom up" BFS here as
@@ -117,12 +196,73 @@ void bfs_bottom_up(Graph graph, solution *sol)
     // As was done in the top-down case, you may wish to organize your
     // code by creating subroutine bottom_up_step() that is called in
     // each step of the BFS process.
+	}
+//	for(int i =0;i<graph->num_nodes;i++){
+//		printf("distance: %d\n",sol->distances[i]);
+//	}
 }
-
 void bfs_hybrid(Graph graph, solution *sol)
 {
+/*
+	  vertex_set list1; 
+	  vertex_set list2;
+    vertex_set_init(&list1, graph->num_nodes);
+    
+    vertex_set_init(&list2, graph->num_nodes);
+    int iteration = 1;
+
+    vertex_set* frontier = &list1;    
+        
+    vertex_set* new_frontier = &list2;    
+    // setup frontier with the root node    
+    // just like put the root into queue
+    memset(frontier->vertices, 0, sizeof(int) * graph->num_nodes);
+
+    frontier->vertices[frontier->count++] = 1;
+
+    // set the root distance with 0
+    sol->distances[ROOT_NODE_ID] = 0;
+    
+    // just like pop the queue
+    while (frontier->count != 0) {
+        
+        
+        // double start_time = CycleTimer::currentSeconds();
+        
+        if(frontier->count >= THRESHOLD) {
+            frontier->count = 0;
+            bottom_up_step(graph, frontier, sol->distances, iteration);
+        }
+        else {
+            frontier->count = 0;
+            top_down_step(graph, frontier, new_frontier, sol->distances);
+
+        vertex_set_clear(new_frontier);
+
+        top_down_step(graph, frontier, new_frontier, sol->distances);
+
+#ifdef VERBOSE
+        double end_time = CycleTimer::currentSeconds();
+        printf("frontier=%-10d %.4f sec\n", frontier->count, end_time - start_time);
+#endif
+
+        // swap pointers
+        vertex_set *tmp = frontier;
+        frontier = new_frontier;
+        new_frontier = tmp;
+        }
+
+        // double end_time = CycleTimer::currentSeconds();
+        // printf("frontier=%-10d %.4f sec\n", frontier->count, end_time - start_time);
+
+        iteration++;
+
+
+    }     
     // For PP students:
     //
     // You will need to implement the "hybrid" BFS here as
     // described in the handout.
+*/
 }
+

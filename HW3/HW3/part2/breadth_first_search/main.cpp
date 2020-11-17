@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 
             std::cout << "Testing Correctness of Top Down\n";
             for (int j=0; j<g->num_nodes; j++) {
-                if (sol1.distances[j] != sol4.distances[j]) {
+								if (sol1.distances[j] != sol4.distances[j]) {
                     fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol1.distances[j], sol4.distances[j]);
                     tds_check = false;
                     break;
@@ -150,8 +150,6 @@ int main(int argc, char** argv) {
             for (int j=0; j<g->num_nodes; j++) {
                 if (sol2.distances[j] != sol4.distances[j]) {
                     fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol2.distances[j], sol4.distances[j]);
-                    bus_check = false;
-                    break;
                 }
             }
 
@@ -283,7 +281,7 @@ int main(int argc, char** argv) {
         for (int j=0; j<g->num_nodes; j++) {
             if (sol2.distances[j] != sol4.distances[j]) {
                 fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol2.distances[j], sol4.distances[j]);
-                bus_check = false;
+								bus_check = false;
                 break;
             }
         }
@@ -302,7 +300,7 @@ int main(int argc, char** argv) {
         for (int j=0; j<g->num_nodes; j++) {
             if (sol3.distances[j] != sol4.distances[j]) {
                 fprintf(stderr, "*** Results disagree at %d: %d, %d\n", j, sol3.distances[j], sol4.distances[j]);
-                hs_check = false;
+ 	              hs_check = false;
                 break;
             }
         }
