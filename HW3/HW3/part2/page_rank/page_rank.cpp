@@ -57,7 +57,13 @@ void pageRank(Graph g, double *solution, double damping, double convergence)
 					}
 }					
 					converged_num = 0;
-
+					double no_outgoing_num = 0;
+					for (int j = 0; j<counter; j++){
+								no_outgoing_num += solution_old[no_outgoing_list[j]] / (double)numNodes* damping;
+					}
+#pragma omp parallel 
+{
+#pragma omp for schedule(static) reduction(+:converged_num)					 
 					for (int i=0; i<numNodes; i++) {
 
 						solution[i] = 0;
@@ -71,18 +77,19 @@ void pageRank(Graph g, double *solution, double damping, double convergence)
 							solution[i] += solution_old[*v] / outgoing_size(g,*v);
 						}
 						solution[i]	= damping * solution[i] + (1.0-damping) / (double)numNodes;
-#pragma omp parallel 
-{
-#pragma omp for schedule(static) reduction(+:solution[i])					 
+/*
 						for (int j = 0; j<counter; j++){
 								solution[i] += solution_old[no_outgoing_list[j]] / (double)numNodes* damping;
 								//printf("im here");
 							
 							
 						}
-}
+	*/			
+						solution[i] += no_outgoing_num;
 						converged_num += abs(solution_old[i]-solution[i]);
-					}
+						}
+//						printf("no out going : %f\n",no_outgoing_num);	
+}
 					
 			printf("converged num: %f\n", converged_num);
 	}
