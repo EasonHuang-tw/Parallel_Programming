@@ -163,14 +163,16 @@ void bfs_bottom_up(graph* graph, solution* sol)
     int iteration = 1;
 
     vertex_set* frontier = &list1;    
-        
+    memset(frontier->vertices,0,sizeof(int)*graph->num_nodes); 
+    frontier->vertices[frontier->count++] = 1;
     // setup frontier with the root node    
     // just like put the root into queue
-    frontier->vertices[frontier->count++] = 1;
-
-    // set the root distance with 0
-    sol->distances[ROOT_NODE_ID] = 0;
+    for (int i =0;i<graph->num_nodes;i++){
+	sol->distances[ROOT_NODE_ID] =  NOT_VISITED_MARKER; 
+    	// set the root distance with 0
+    }
     
+    sol->distances[ROOT_NODE_ID] = 0;
     // just like pop the queue
     while (frontier->count != 0) {
         
