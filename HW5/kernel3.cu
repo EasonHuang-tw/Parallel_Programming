@@ -26,27 +26,33 @@ __global__ void mandelKernel( int* d_data,float stepX, float stepY,float lowerX,
     //
 	int thisX= blockIdx.x * blockDim.x + threadIdx.x;
 	int thisY= blockIdx.y * blockDim.y + threadIdx.y;
-    float x = lowerX + thisX * stepX;
-    float y = lowerY + thisY * stepY;
-  
-	float c_re = x, c_im = y;
-	float z_re = c_re, z_im = c_im;
-  	int i;
-  	for (i = 0; i < maxIterations; ++i)
-  	{
+	if(thisX % 16 == 0  ){
+		int j = thisX , k = thisY;
+		for(;j < thisX+16;j++){
+				float x = lowerX + j * stepX;
+				float y = lowerY + thisY * stepY;
+				  
+				float c_re = x, c_im = y;
+				float z_re = c_re, z_im = c_im;
 
-    	if (z_re * z_re + z_im * z_im > 4.f)
-      	break;
+				int i;
+				for (i = 0; i < maxIterations; ++i)
+				{
 
-    	float new_re = z_re * z_re - z_im * z_im;
-    	float new_im = 2.f * z_re * z_im;
-    	z_re = c_re + new_re;
-    	z_im = c_im + new_im;
-  	}
-	int *ptr = (int *)((char*)d_data+thisY*pitch);
-	ptr[thisX] = i;
-	//d_data[ thisX + thisY * width ] = i;
+						if (z_re * z_re + z_im * z_im > 4.f)
+						break;
 
+						float new_re = z_re * z_re - z_im * z_im;
+						float new_im = 2.f * z_re * z_im;
+						z_re = c_re + new_re;
+						z_im = c_im + new_im;
+				}
+				int *ptr = (int *)((char*)d_data+thisY*pitch);
+				ptr[j] = i;
+				//d_data[ thisX + thisY * width ] = i;
+			
+		}
+	}
 }
 
 // Host front-end function that allocates the memory and launches the GPU kernel
