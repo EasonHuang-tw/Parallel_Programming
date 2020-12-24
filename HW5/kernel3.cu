@@ -26,11 +26,12 @@ __global__ void mandelKernel( int* d_data,float stepX, float stepY,float lowerX,
     //
 	int thisX= blockIdx.x * blockDim.x + threadIdx.x;
 	int thisY= blockIdx.y * blockDim.y + threadIdx.y;
-	if(thisX % 16 == 0  ){
-		int j = thisX , k = thisY;
-		for(;j < thisX+16;j++){
+	if((thisY % 4 ==0) && (thisX % 4 == 0)){
+		int j , k;
+		for(j=thisX ; j<thisX+4 ; j++){
+			for(k=thisY ; k<thisY+4 ; k++){
 				float x = lowerX + j * stepX;
-				float y = lowerY + thisY * stepY;
+				float y = lowerY + k * stepY;
 				  
 				float c_re = x, c_im = y;
 				float z_re = c_re, z_im = c_im;
@@ -47,10 +48,10 @@ __global__ void mandelKernel( int* d_data,float stepX, float stepY,float lowerX,
 						z_re = c_re + new_re;
 						z_im = c_im + new_im;
 				}
-				int *ptr = (int *)((char*)d_data+thisY*pitch);
+				int *ptr = (int *)((char*)d_data+k*pitch);
 				ptr[j] = i;
 				//d_data[ thisX + thisY * width ] = i;
-			
+			}
 		}
 	}
 }
