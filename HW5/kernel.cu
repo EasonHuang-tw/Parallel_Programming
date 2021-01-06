@@ -21,7 +21,7 @@ __global__ static inline int mandel(float c_re, float c_im, int count)
   return i;
 }
 */
-__global__ void mandelKernel( int* d_data,float stepX, float stepY,float lowerX,float lowerY ,int width, int maxIterations) {
+__global__ void mandelKernel( int* d_data,float stepX, float stepY,float lowerX,float lowerY ,int width, int maxIterations, size_t pitch) {
     // To avoid error caused by the floating number, use the following pseudo code
     //
 	int thisX= blockIdx.x * blockDim.x + threadIdx.x;
@@ -43,7 +43,9 @@ __global__ void mandelKernel( int* d_data,float stepX, float stepY,float lowerX,
     	z_re = c_re + new_re;
     	z_im = c_im + new_im;
   	}
-	d_data[ thisX + thisY * width ] = i;
+	int *ptr = (int *)((char*)d_data+thisY*pitch);
+	ptr[thisX] = i;
+	//d_data[ thisX + thisY * width ] = i;
 
 }
 
@@ -55,16 +57,19 @@ void hostFE (float upperX, float upperY, float lowerX, float lowerY, int* img, i
 	int *data, *d_data;
 	dim3 threadPerBlock(25,25);
 	dim3 numBlocks(resX/threadPerBlock.x,resY/threadPerBlock.y);
+	size_t pitch;
+	//data = (int*)malloc( sizeof(int)*resX*resY );
+	cudaHostAlloc(&data, sizeof(int) * resX*resY, cudaHostAllocMapped);
 
-	data = (int*)malloc( sizeof(int)*resX*resY );
-	cudaMalloc((void**)&d_data, sizeof(int)*resX*resY );
+	cudaMallocPitch((void **)&d_data, &pitch, sizeof(int)*resX, resY);
+//	cudaMalloc((void**)&d_data, sizeof(int)*resX*resY );
 
-	mandelKernel<<<numBlocks,threadPerBlock>>>(d_data,stepX,stepY,lowerX,lowerY,resX,maxIterations);
+	mandelKernel<<<numBlocks,threadPerBlock>>>(d_data,stepX,stepY,lowerX,lowerY,resX,maxIterations,pitch);
 
+ 	cudaMemcpy2D(data, sizeof(int)*resX, d_data, pitch, sizeof(int)*resX, resY, cudaMemcpyDeviceToHost);
 
-	cudaMemcpy( (void*)data , (void*)d_data , sizeof(int)*resX*resY , cudaMemcpyDeviceToHost );
-	memcpy(img,data,sizeof(int) * resX * resY );
-	free(data);
+	memcpy(img,data,sizeof(int)*resX*resY);
+	cudaFreeHost(data);
 	cudaFree(d_data);
-
+	
 }
