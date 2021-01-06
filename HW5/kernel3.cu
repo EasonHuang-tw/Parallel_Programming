@@ -51,7 +51,7 @@ __global__ void mandelKernel( int* d_data,float stepX, float stepY,float lowerX,
 				int *ptr = (int *)((char*)d_data+k*pitch);
 				ptr[j] = i;
 				//d_data[ thisX + thisY * width ] = i;
-			}	
+			}
 		}
 	}
 }
